@@ -1,0 +1,27 @@
+---
+abstract: 'Use PIPEs to import a file into MySQL table.'
+author:
+  - 'Christopher Brown, <ctbrown@cpan.org<gt>'
+build_requires:
+  Test::More: 0.42
+distribution_type: module
+generated_by: 'Module::Install version 0.75'
+license: perl
+meta-spec:
+  url: http://module-build.sourceforge.net/META-spec-v1.3.html
+  version: 1.3
+name: MySQL-Slurp
+no_index:
+  directory:
+    - inc
+    - t
+requires:
+  Carp: 0
+  File::Path: 2.04
+  List::MoreUtils: 0
+  Mknod: 0
+  Moose: 0.51
+  MooseX::GlobRef::Object: 0.0203
+  perl: 5.8.0
+  self: 0.15
+version: 0.15
