@@ -24,4 +24,4 @@ requires:
   MooseX::GlobRef::Object: 0.0203
   perl: 5.8.0
   self: 0.15
-version: 0.15
+version: 0.16

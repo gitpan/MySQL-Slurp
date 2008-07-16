@@ -4,3 +4,8 @@ Revision history for Perl extension MySQL::Slurp.
 	- original version; created by h2xs 1.23 with options
 		-XAn MySQL::Slurp
 
+0.15 Sun Jul 13 00:00:00 2008
+    - First CPAN Release
+
+0.16 Tue Jul 15 23:18:00 2008
+    - Fix non-required depenencies

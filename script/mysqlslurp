@@ -3,7 +3,7 @@
 package MySQL::Slurp::App;
 use Moose;
 use self;
-use Data::Dumper;
+# use Data::Dumper;
 use Pod::Usage;
   extends 'MySQL::Slurp';
   with 'MooseX::Getopt';
@@ -85,7 +85,7 @@ use Pod::Usage;
 package main;
 
 use Data::Dumper;
-    our $VERSION = '0.8';
+    our $VERSION = '0.82';
     my $slurp = MySQL::Slurp::App->new_with_options;
 
     $slurp->open;
@@ -97,7 +97,7 @@ __END__
 
 =head1 NAME
 
-mysqlslurp - slurp data in from <STDIN>
+mysqlslurp - slurp <STDIN> into a MySQL table
 
 =head1 SYNOPSIS
 
@@ -119,11 +119,29 @@ mysqlslurp - slurp data in from <STDIN>
 
 =head1 DESCRIPTION
 
-B<mysqlslurp> reads from <STDIN> and writes to a database table using 
-B<mysqlimport>.  Parameters --database and --table are required.  
-Specifying a --tmp directory is optional.  All other options are passed
-to B<mysqlimport> unchanged.
+B<mysqlslurp> reads from <STDIN> and writes to directly to a MySQL
+table using B<mysqlimport>.  Parameters --database and --table are 
+required.  Specifying a --tmp directory where the FIFO pipe will be 
+created is optional.  All other options are passedto B<mysqlimport> 
+unchanged.
 
+=head1 ADVANTAGES
+
+=over 4
+
+=item Speed
+
+mysqlslurp wraps mysqlimport, the fastest way to import data into
+MySQL tables.  Especially with the --use-threads option.
+
+=item Data in Motion
+
+Unlike B<mysqlimport>, B<mysqlslurp> does not require that the data be
+resident in a file on disk. This is handy in multiple server setups.
+
+=item Good Defaults
+
+Mostly just works.  
 
 =head1 SEE ALSO
 

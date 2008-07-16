@@ -3,14 +3,13 @@ package MySQL::Slurp;
 
     use 5.008 ;
     use Carp;                                         
-    use Perl6::Say;
     use self qw(self args);
     use List::MoreUtils qw(any);
     use File::Path;
     use Moose;
       extends 'MooseX::GlobRef::Object';
     use Mknod;  # function mknod creates FIFO / named pipe      
-    our $VERSION = 0.15;
+    our $VERSION = 0.16;
 
 
   # Step 0. Initialize attributes 
