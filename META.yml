@@ -18,10 +18,11 @@ no_index:
 requires:
   Carp: 0
   File::Path: 2.04
+  IO::File::flock: 0.31
   List::MoreUtils: 0
   Mknod: 0
   Moose: 0.51
   MooseX::GlobRef::Object: 0.0203
   perl: 5.8.0
   self: 0.15
-version: 0.2
+version: 0.21

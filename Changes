@@ -9,3 +9,11 @@ Revision history for Perl extension MySQL::Slurp.
 
 0.16 Tue Jul 15 23:18:00 2008
     - Fix non-required depenencies
+
+0.20 Wed Aug 06 08:00:00 2008
+    - Major revision.  Writing to FIFO using buffering and locking
+    - New dependendy: IO::File::flock
+    
+0.21 Wed Aug 06 12:09:00 2008
+    - Minor changes to tests abd distribution
+

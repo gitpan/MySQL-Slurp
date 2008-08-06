@@ -12,7 +12,7 @@ package MySQL::Slurp;
       with 'MooseX::Getopt';
     use Mknod;  # function mknod creates FIFO / named pipe      
     use IO::File::flock;    # Lockable IO:File object
-    our $VERSION = 0.20;
+    our $VERSION = 0.21;
 
 
   # Step 0. Initialize attributes 
