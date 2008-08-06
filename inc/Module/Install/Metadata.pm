@@ -6,7 +6,7 @@ use Module::Install::Base;
 
 use vars qw{$VERSION $ISCORE @ISA};
 BEGIN {
-	$VERSION = '0.75';
+	$VERSION = '0.71';
 	$ISCORE  = 1;
 	@ISA     = qw{Module::Install::Base};
 }
@@ -30,7 +30,6 @@ my @tuple_keys = qw{
 	requires
 	recommends
 	bundles
-	resources
 };
 
 sub Meta            { shift        }
@@ -73,7 +72,7 @@ sub configure_requires {
 		my $version = shift || 0;
 		push @{ $self->{values}->{configure_requires} }, [ $module, $version ];
 	}
-	$self->{values}->{configure_requires};
+	$self->{values}{configure_requires};
 }
 
 sub recommends {
@@ -83,7 +82,7 @@ sub recommends {
 		my $version = shift || 0;
 		push @{ $self->{values}->{recommends} }, [ $module, $version ];
 	}
-	$self->{values}->{recommends};
+	$self->{values}{recommends};
 }
 
 sub bundles {
@@ -93,24 +92,7 @@ sub bundles {
 		my $version = shift || 0;
 		push @{ $self->{values}->{bundles} }, [ $module, $version ];
 	}
-	$self->{values}->{bundles};
-}
-
-# Resource handling
-sub resources {
-	my $self = shift;
-	while ( @_ ) {
-		my $resource = shift or last;
-		my $value    = shift or next;
-		push @{ $self->{values}->{resources} }, [ $resource, $value ];
-	}
-	$self->{values}->{resources};
-}
-
-sub repository {
-	my $self = shift;
-	$self->resources( repository => shift );
-	return 1;
+	$self->{values}{bundles};
 }
 
 # Aliases for build_requires that will have alternative
@@ -285,25 +267,22 @@ sub abstract_from {
 	 );
 }
 
-# Add both distribution and module name
 sub name_from {
-	my ($self, $file) = @_;
+	my $self = shift;
 	if (
-		Module::Install::_read($file) =~ m/
-		^ \s*
+		Module::Install::_read($_[0]) =~ m/
+		^ \s
 		package \s*
 		([\w:]+)
 		\s* ;
 		/ixms
 	) {
-		my ($name, $module_name) = ($1, $1);
+		my $name = $1;
 		$name =~ s{::}{-}g;
 		$self->name($name);
-		unless ( $self->module_name ) {
-			$self->module_name($module_name);
-		}
 	} else {
-		die "Cannot determine name from $file\n";
+		die "Cannot determine name from $_[0]\n";
+		return;
 	}
 }
 
@@ -312,7 +291,7 @@ sub perl_version_from {
 	if (
 		Module::Install::_read($_[0]) =~ m/
 		^
-		(?:use|require) \s*
+		use \s*
 		v?
 		([\d_\.]+)
 		\s* ;
@@ -377,7 +356,7 @@ sub license_from {
 			$pattern =~ s{\s+}{\\s+}g;
 			if ( $license_text =~ /\b$pattern\b/i ) {
 				if ( $osi and $license_text =~ /All rights reserved/i ) {
-					print "WARNING: 'All rights reserved' in copyright may invalidate Open Source license.\n";
+					warn "LEGAL WARNING: 'All rights reserved' may invalidate Open Source licenses. Consider removing it.";
 				}
 				$self->license($license);
 				return 1;
@@ -387,21 +366,6 @@ sub license_from {
 
 	warn "Cannot determine license info from $_[0]\n";
 	return 'unknown';
-}
-
-sub install_script {
-	my $self = shift;
-	my $args = $self->makemaker_args;
-	my $exe  = $args->{EXE_FILES} ||= [];
-        foreach ( @_ ) {
-		if ( -f $_ ) {
-			push @$exe, $_;
-		} elsif ( -d 'script' and -f "script/$_" ) {
-			push @$exe, "script/$_";
-		} else {
-			die "Cannot find script '$_'";
-		}
-	}
 }
 
 1;

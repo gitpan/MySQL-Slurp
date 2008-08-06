@@ -13,7 +13,7 @@ use Pod::Usage;
     #   remaining options to mysqlimport.
     #
       # print Dumper &Getopt::Long::Configure;
-      &Getopt::Long::Configure( qw( pass_through ) );
+      &Getopt::Long::Configure( qw( pass_through auto_version ) );
       
 
     has 'tmp' => (
@@ -85,7 +85,7 @@ use Pod::Usage;
 package main;
 
 use Data::Dumper;
-    our $VERSION = '0.82';
+    our $VERSION = '0.83';
     my $slurp = MySQL::Slurp::App->new_with_options;
 
     $slurp->open;

@@ -5,7 +5,7 @@
 
 # change 'tests => 1' to 'tests => last_test_to_print';
 
-use Test::More tests => 13;
+use Test::More tests => 14;
 BEGIN { use_ok('MySQL::Slurp') };
 
 #########################
@@ -71,9 +71,10 @@ BEGIN { use_ok('MySQL::Slurp') };
         "`;
 
         ok( $load->open, 'Method: open' );
-        ok( -p $load->fifo, 'Pipe opened' );
+        ok( -p $load->fifo, 'Method: fifo' );
                                                        
-        ok( (print $load "a\tb\n") == 1, 'Print to FIFO successful' );
+        ok( $load->write( "d\te\n" ), "Method: write" );
+        ok( (print {$load->writer} "a\tb\n") == 1, 'Direct print to FIFO' );
 
         ok( $load->close, 'Method: close' );
         ok( ! -p $load->fifo , 'FIFO successfully removed' );
@@ -83,6 +84,8 @@ BEGIN { use_ok('MySQL::Slurp') };
 
     }
     
+# TO test the script
+# perl -e'print "a\tb\n"' | perl -Ilib script/mysqlslurp --database test --table mysqlslurp
     
 
 1;

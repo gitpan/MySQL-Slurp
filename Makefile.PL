@@ -2,9 +2,9 @@
 use inc::Module::Install;
 
 # Define metadata
-name           'MySQL-Slurp';
+name         'MySQL-Slurp';
 perl_version '5.008';
-all_from       'lib/MySQL/Slurp.pm';
+all_from     'lib/MySQL/Slurp.pm';
 
 # Specific dependencies
 requires 'Moose'                    => 0.51; 
@@ -20,6 +20,6 @@ requires_external_bin 'mysql';
 
 test_requires  'Test::More' => '0.42';
 # no_index       'directory'  => 'demos';
-install_script 'mysqlslurp';
+install_script 'script/mysqlslurp';
 
 WriteAll;
