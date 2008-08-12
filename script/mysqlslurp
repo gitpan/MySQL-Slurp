@@ -85,7 +85,7 @@ use Pod::Usage;
 package main;
 
 use Data::Dumper;
-    our $VERSION = '0.83';
+    our $VERSION = '0.84';
     my $slurp = MySQL::Slurp::App->new_with_options;
 
     $slurp->open;
@@ -119,10 +119,10 @@ mysqlslurp - slurp <STDIN> into a MySQL table
 
 =head1 DESCRIPTION
 
-B<mysqlslurp> reads from <STDIN> and writes to directly to a MySQL
-table using B<mysqlimport>.  Parameters --database and --table are 
+mysqlslurp reads from <STDIN> and writes to directly to a MySQL
+table.  Parameters --database and --table are 
 required.  Specifying a --tmp directory where the FIFO pipe will be 
-created is optional.  All other options are passedto B<mysqlimport> 
+created is optional.  All other options are passed to B<mysqlimport> 
 unchanged.
 
 =head1 ADVANTAGES

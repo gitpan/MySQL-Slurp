@@ -1,6 +1,8 @@
 # ---------------------------------------------------------------------
 package MySQL::Slurp;
 
+    our $VERSION = 0.23;
+
     use 5.008 ;
     use Carp;                                         
     use self qw(self);  # We do not import args since this is an attribute
@@ -8,16 +10,32 @@ package MySQL::Slurp;
     use List::MoreUtils qw(any);
     use File::Path;
     use Moose;
-      extends 'MooseX::GlobRef::Object';
-      with 'MooseX::Getopt';
-    use Mknod;  # function mknod creates FIFO / named pipe      
-    use IO::File::flock;    # Lockable IO:File object
-    our $VERSION = 0.21;
+        with 'MooseX::Getopt';          # For NoGetopt tags
 
+    use Mknod;  # function mknod creates FIFO / named pipe      
+    use MySQL::Slurp::Writer;
+    
+
+# ---------------------------------------------------------------------
+# ATTRIBUTES
+# ---------------------------------------------------------------------
 
   # Step 0. Initialize attributes 
-    has 'database' => ( is => 'rw', isa => 'Str', required => 1 );
-    has 'table'    => ( is => 'rw', isa => 'Str', required => 1 );
+    has 'database' => ( 
+            is             => 'rw', 
+            isa            => 'Str', 
+            required       => 1,  
+            documentation  => 'Target database' ,
+    );
+
+
+    has 'table'    => ( 
+            is            => 'rw', 
+            isa           => 'Str', 
+            required      => 1 ,
+            documentation => 'Target table' ,
+    );
+
 
     has 'tmp'  => ( 
             is            => 'rw' , 
@@ -26,6 +44,7 @@ package MySQL::Slurp;
             default       => $ENV{ TMPDIR } || $ENV{ TMP } || '/tmp' || '.' , 
             documentation => "Temporary directory for " . __PACKAGE__  ,
     );                                                                 
+
 
     has 'args' => ( 
             is            => 'rw' , 
@@ -46,10 +65,10 @@ package MySQL::Slurp;
             documentation => 'Method to use mysqlimport|LOAD' ,
     );
    
-
+# Moved into MySQL::Slurp::Writer roles
     has 'writer' => (
             is            => 'rw' ,
-            isa           => 'IO::File::flock' ,
+            isa           => 'MySQL::Slurp::Writer' ,
             required      => 0 ,
             metaclass     => 'NoGetopt' ,
             documentation => 'IO::File::flock filehandle to the pipe' ,
@@ -60,64 +79,90 @@ package MySQL::Slurp;
             is            => 'rw' ,
             isa           => 'Int' ,
             required      => 1 ,
-            default       => 20 ,
+            default       => 1 ,
             documentation => 'Records processed before flushing to the file handle ( default: 1)' 
     );
 
-    has '_buffer' => (
-            is            => 'rw' ,
-            isa           => 'ArrayRef' ,
-            required      => 1 ,
-            default       => sub { [ ] } ,
-            metaclass     => 'NoGetopt' ,
-            documentation => 'Write record buffer' ,
-    );
 
-    
-        
-  # ---------------------------------------------------------
-  # Internal Attributes
-  # ---------------------------------------------------------
-  # verbose
+# ---------------------------------------------------------
+# Internal Attributes
+# ---------------------------------------------------------
+  # verbose, force
   #   Attribute, detect if we are in verbose mode.  We take the flag
   #   from the args attribute.  This allows it to be passed through to
   #   the mysqlimport command as well
-    sub verbose {
-        if ( any { $_ =~ /[^\w] (-v|--verbose) [ \w$ ]/x } @{ self->args } ) {
-            return 1 ;
-        } else {
-            return 0;
-        }
-    }
+
+    has verbose => (
+        is            => 'ro' ,
+        isa           => 'Bool' ,
+        required      => 1 ,
+        lazy          => 1 ,
+        default       => 
+            sub { 
+                if ( 
+                    any { $_ =~ /[^\w] (-v|--verbose)   [ \w$ ]/x } @{ self->args }                  ) {
+                    return 1 ;
+                } else {
+                    return 0 ;
+                }    
+            } ,
+        documentation => 'Force writing on error' ,
+        metaclass     => 'NoGetopt' ,  
+    );      
 
 
-  # force
-  #   Attribute.  Indicates if we are in force mode.
-    sub force {
-        if ( any { $_ =~ /[^\w] (-f|--force)   [ \w$ ]/x } @{ self->args } ) {
-            return 1 ;
-        } else {
-            return 0 ;
-        }
-    }
-
-
+    has force => (
+        is            => 'ro' ,
+        isa           => 'Bool' ,
+        required      => 1 ,
+        lazy          => 1 ,
+        default       => 
+            sub { 
+                if ( 
+                    any { $_ =~ /[^\w] (-f|--force)   [ \w$ ]/x } @{ self->args }                  ) {
+                    return 1 ;
+                } else {
+                    return 0 ;
+                }    
+            } ,
+        documentation => 'Force writing on error' ,
+        metaclass     => 'NoGetopt' ,  
+    );
 
 # -----------------------------------------------------------
-# FIFO Methods
+# FIFO Attributes
 # -----------------------------------------------------------
 
   # Since FIFO is required to match the table name, and it is
   # dependent on the other features, we do not make it an 
-  # attribute.
-    sub fifo {
-        return( self->dir  . "/" . self->table . ".txt" ) ;
-    }
+  # attribute but install it as a method ... lazy
 
-    sub dir {
-        return( self->tmp . "/mysqlslurp/" . self->database );
-    }
+    has fifo => ( 
+        is            => 'ro'  , 
+        isa           => 'Str' ,
+        required      => 1 ,
+        lazy          => 1 ,
+        default       => sub { self->dir  . "/" . self->table . ".txt" } ,
+        documentation => 'Location of the fifo' ,
+        metaclass     => 'NoGetopt' ,  
+    );
 
+
+    has dir => (
+        is             => 'ro' ,
+        isa            => 'Str' ,
+        required       => 1 ,
+        lazy           => 1 ,
+        default        => sub {  self->tmp . "/mysqlslurp/" . self->database } , 
+        documentation  => 'Location of temporary mysqlslurp directory' ,
+        metaclass      => 'NoGetopt' ,  
+    );
+
+
+
+# ---------------------------------------------------------------------
+# METHODS
+# ---------------------------------------------------------------------
 
   # Create FIFO and if necessary a directory in self->tmp
     sub _mkfifo {
@@ -141,6 +186,7 @@ package MySQL::Slurp;
 
     } 
 
+
   # Remove FIFO and if it didn't previously exist the directory within tmp.
     sub _rmfifo {
         
@@ -156,6 +202,7 @@ package MySQL::Slurp;
 
     }
         
+
 # -----------------------------------------------------------
 # MySQL Import wrapper
 #   Executes a system command around mysqlimport
@@ -174,14 +221,15 @@ package MySQL::Slurp;
             system( "$command" );
 
         } elsif ( self->method eq 'LOAD' ) {
+
         
-            # my $command;
-            my $command = "mysql --local -e'" .
-                 "LOAD DATA LOCAL INFILE \'" . self->fifo . "\'" . 
-                 "INTO " . self->database . "." . self->table . "'";
+            my $command = "mysql --local -e\"" .
+                 "LOAD DATA LOCAL INFILE \'" . self->fifo . "\' " . 
+                 "INTO TABLE " . self->database . "." . self->table . "\"";
             
             print "Executing ... \"$command\" \n" if (self->verbose);
-            system( "$command" );
+
+            system( "$command &" ); # Command must be placed in background
 
         } else {
 
@@ -196,6 +244,7 @@ package MySQL::Slurp;
 # FILE HANDLE METHODS
 #   Connection to the FIFO
 # -----------------------------------------------------------
+
   # open:
   #   Turns object into a MooseX::GlobRef::Object
     sub open {
@@ -210,89 +259,56 @@ package MySQL::Slurp;
         self->_install_writer ;
 
         return self;
+
     }
-
-
-  # Globref is deprecated as of 0.20
-  # Writing occurs through the MySQL::Slurp::writer attribute
-  # Which is a IO::File::flock object
-  # sub _install_globref {
-
-  #     my $self = self;
-  #
-  #   # open GLobRef connection to FIFO
-  #     print STDERR "Opening filehandle '" . self->fifo 
-  #       . "' to write to: " . self->database . "." .self->table . "\n" 
-  #       if ( self->verbose );
-  #
-  #     my $hashref = ${ *$self };
-  #     &open( $self, ">", self->fifo ) or confess "Cannot open";
-  #
-  #     return $self;
-  #
-  # }
 
 
     sub _install_writer {
 
-       self->writer( IO::File::flock->new( self->fifo, ">" ) );
-       return self->writer;
+       # self->writer( IO::File->new( self->fifo, ">" ) );
+        self->writer( 
+          MySQL::Slurp::Writer->new( 
+            filename => self->fifo ,
+            buffer   => self->buffer ,
+          )
+        );
+
+       return self->writer; # important for some reason.
 
     }
-       
        
 
     sub close {
 
         print "Closing filehandle\n" if ( self->verbose );
-        # close( $_[0] ) || carp( "Cannot close file handle to " . self->fifo );
 
-        self->flush;
+        # self->writer->flush;
         self->writer->close();
         self->_rmfifo;
 
     }
 
 
-    sub flush {
+    sub print {
 
-            my $records = scalar @{ self->_buffer };
-            
-            self->writer->lock_ex;
-            print { self->writer } @{ self->_buffer }; 
-            self->writer->lock_un; 
-
-            self->_buffer( [] );
-
-            return $records;
+        self->writer->print( @_[1..$#_] );
 
     } 
 
-  #
-  # Write to writer
-  # Buffered 
-  # Returns the number of records in the buffer before flush if any.
-    sub write {
-        
-        my $n_records = $#_;
 
-        push( @{ self->_buffer }, @_[1..$#_]); 
-
-      # Flush buffer if it exceeds capacity
-        self->flush
-          if ( scalar @{ self->_buffer } > self->buffer );
-
-        $n_records;  # return the number of records committed 
-
+    sub _write_ {
+    
+        print { self->writer } @_[1..$#_] ;
+    
     }
+
 
   # METHOD:slurp
   #   Slurp from <STDIN>
     sub slurp {
 
         while( <STDIN> ) {
-            self->write( $_ );
-            # print {self->writer} $_;
+            self->print( $_ );
         }
         
     } # END METHOD: slurp 
@@ -314,7 +330,7 @@ MySQL::Slurp - Use PIPEs to import a file into MySQL table.
 
 =head1 VERSION
 
-0.20
+0.23
 
 =head1 SYNOPSIS
 
@@ -325,6 +341,7 @@ MySQL::Slurp - Use PIPEs to import a file into MySQL table.
         database => 'test' , 
         table    => 'table_1' , 
         buffer   => 10000 ,
+        args     => []    ,
     );
 
     $slurper->open;
@@ -335,48 +352,56 @@ MySQL::Slurp - Use PIPEs to import a file into MySQL table.
   # IMPORT METHODS
     $slurper->slurp();         # slurp from <STDIN>
   
+
   # RECOMMENDED METHOD TO WRITE TO A TABLE 
   #     implements buffer and locks
     $slurper->write( @records );    
 
+
   # WRITE DIRECTLY TO TABLE WITHOUT BUFFER AND LOCKS 
-    print {$slurper->writer} "Fred\tFlinstone\n";  
+    $slurper->print( "Fred\tFlinstone\n" );
     print { $slurper->{writer} } "Fred\tFlinstone\n";  
 
     $slurper->close; 
 
-  # In cordinated environents
-    $slurper->write( @a );  # In thread 1.
-    $slurper->write( @b );  # In thread 2.
+
+  # In coordinated environents
+    my $slurper1 = MySQL::Slurp::Writer->new( ... );
+    my $slurper2 = MySQL::Slurp::Writer->new( ... );
+
+    $slurper1->write( @a );  # In thread 1.
+    $slurper2->write( @b );  # In thread 2.
 
 
 
 =head1 DESCRIPTION
 
-The command-line tool, B<mysqlimport>, is the fastest way to import 
-data into MySQL especially using C<--use-threads>.  Unfortunately, 
-B<mysqlimport> does not read from <STDIN>.  IN fact, B<mysqlimport> 
-only reads from files that have the same name as the target table.  
-This is often inconvenient.
+MySQL::Slurp slurps data directly into a MySQL table.  This is the 
+fastest way to import data into MySQL.
 
-B<MySQL::Slurp> has the speed of B<mysqlimport> but permits loading
-from <STDIN> or provides a GlobRef file handle for writing directly to a
-MySQL table.  This is very handy for large ETL jobs.
+By itself mysqlimport does not allow reading from C<STDIN>.  IN fact, 
+mysqlimport only reads from files that have the same name as the target
+table.  This is very often inconvenient. 
 
-This module simply wraps and B<mysqlimport> and creates the necessary
-FIFO.  As such, catching (data) errors is relegated to B<mysqlimport>.
+This module provides a library and tool that wraps mysqlimport and the
+mkfifo to allow piping data directly into MySQL tables.  It allows such 
+things as:
+
+  cat file | perl myscript.pl 
+
+This is very handy for large ETL jobs.
+
 Unike using L<DBI> for trapping errors, catching errors with 
-B<mysqlimport> can be troublesome with inconsitent data.  It is 
-recommended that you check you data before writing to the B<MySQL::Slurp>
-handle or use a suitable L<DBI> method.
-inconsistent.
+mysqlimport can be troublesome with inconsitent data.  It is 
+recommended that you check you data before writing to the MySQL::Slurp
+handle or use a suitable L<DBI> method.  
 
 
 =head1 METHODS
 
 =head2 new 
 
-Creates a new MySQL::Slurp object.
+Creates a new MySQL::Slurp object
 
 =over 
 
@@ -392,21 +417,21 @@ Name of table to import (required)
 
 Name of temporary directory (optional)
 
-=item buffer
+=item buffer  ( default: 1 )
 
 Maximum number of records that are stored in the buffer before locking
 the fifo and flushing to the table.  By default, there is no buffering,
 buffer = 1.
 
+=item method ( default: mysqlimport )
+
+Method to use for importing.  Supports c<mysqlimport> and c<LOAD> for
+mysqlimport and LOAD DATA INFILE, respectively.
 
 =item args      
 
 Options to pass to mysqlimport.  args is an array ref and should appear
-exactly as it does in the command line invocation of B<mysqlimport>
-
-=item method
-
-Method to use...presently not implemented, uses mysqlimport.
+exactly as it does in the command line invocation of mysqlimport.
 
 =back
 
@@ -428,28 +453,25 @@ Closes and removes the pipe and temporary table.
 
 Write <STDIN> to the database table.
 
+
 =head1 THREAD SAFE
 
 MySQL::Slurp is believed to be thread safe if using the 'write' method.
 Directly accessing the IO::File pipe is not considered Thread safe.
 
-=head1 EXPORT
-
-None.
 
 =head1 TODO
 
 - use MooseX::Attribute::Defaults::GNU for object attributes
 
-- remove reliance on installation of mysqlimport, by XS wrapping the C libraries.
+- remove reliance on installation of mysqlimport, by XS wrapping the C 
+libraries.
 
 - Better error catching than mysqlimport
 
 - create a version to run on windows with named pipes(?)
 
-- alias attribute tmp as temp.
 
-- allow options for slurp to change the MySQL::Slurp object's attributes
 
 
 =head1 SEE ALSO

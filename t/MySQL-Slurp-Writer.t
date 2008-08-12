@@ -1,36 +1,47 @@
 # Before `make install' is performed this script should be runnable with
-# `make test'. After `make install' it should work as `perl MySQL-Slurp.t'
+# `make test'. After `make install' it should work as `perl MySQL-Slurp-Writer.t'
 
 #########################
 
 # change 'tests => 1' to 'tests => last_test_to_print';
 
-use Test::More tests => 14;
-BEGIN { use_ok('MySQL::Slurp') };
+use Test::More tests => 2;
+BEGIN { use_ok('MySQL::Slurp::Writer') };
 
 #########################
+    my $buffer = 10;
+    my $file   = 'mysqlwriter.test';
 
-# Insert your test code below, the Test::More module is use()ed here so read
-# its man page ( perldoc Test::More ) for help writing this test script.
+    system( "touch $file" ); # Change to sysopen
+    use Fcntl qw(:flock);
 
-    if ( $^O =~ /Win/i ) {
-        BAIL_OUT( "MySQL::Slurp does not work on windows ... yet\n" );
-    }
+    my $writer = MySQL::Slurp::Writer->new( 
+                    filename    => $file , 
+                    buffer      => 10 ,
 
-
-  
-    my $load = MySQL::Slurp->new( 
-        database => 'test', 
-        table    => 'mysqlslurp', 
-        args     => ["--force" ] ,
-        buffer   => 1000 ,
-        # method   => 'LOAD' ,
     );
 
-    isa_ok( $load, 'MySQL::Slurp' );
+    isa_ok( $writer, 'MySQL::Slurp::Writer' );
 
+
+    use Data::Dumper;                        
+    print  Dumper $writer;
+    flock( $writer->iofile, LOCK_EX );
+
+  # Use method of the subclass                                  
+    $writer->iofile->print( "hello world4\n" );
+    $writer->print( "hello world3\n" );
+    $writer->close;
+    
+__END__
+    die;
+    $writer->print( "lock_ex" );
   # Attributes 
     diag( "Testing Attributes" );
+    # ok( $writer->buffer == $buffer, 'Attribute: buffer' );  
+
+
+    ok(
     ok( $load->database eq 'test', 'Attribute: database' );
     ok( $load->table    eq 'mysqlslurp' , 'Attribute: table' );
     ok( -e $load->tmp            , 'Temporary directory exists' );
@@ -56,7 +67,6 @@ BEGIN { use_ok('MySQL::Slurp') };
     diag( "dropped when done." );
  }
 
-
     SKIP: {                    
         
         skip "Skipping live tests", 6 if ! $ENV{mysqlslurp} ;
@@ -70,18 +80,14 @@ BEGIN { use_ok('MySQL::Slurp') };
         `$command -e"drop table if exists test.mysqlslurp"` ;
         `$command -e"
             create table test.mysqlslurp 
-            ( col1 char(25), col2 char(25) ) 
+            ( a char(25), b char(25) ) 
         "`;
 
         ok( $load->open, 'Method: open' );
         ok( -p $load->fifo, 'Method: fifo' );
                                                        
-        ok( $load->print( "d\te\n" ), "Method: write" );
-        for( 1..10_000 ) {
-            $load->print( "$_\t1\n" );
-        }
-
-        ok( (print { $load->writer->iofile } "a\tb\n") == 1, 'Direct print to FIFO' );
+        ok( $load->write( "d\te\n" ), "Method: write" );
+        ok( (print {$load->writer} "a\tb\n") == 1, 'Direct print to FIFO' );
 
         ok( $load->close, 'Method: close' );
         ok( ! -p $load->fifo , 'FIFO successfully removed' );

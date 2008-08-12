@@ -17,3 +17,15 @@ Revision history for Perl extension MySQL::Slurp.
 0.21 Wed Aug 06 12:09:00 2008
     - Minor changes to tests abd distribution
 
+0.23 Mon Aug 11 23:18:00 2008
+    - Created MySQL::Slurp::Writer class
+      - Made completely thread-safe through locking
+      - Made faster by buffering
+    - Added Method and Option 'LOAD'
+    - Documentation clean-up
+    - Changed 'force', 'verbose', 'fifo', 'dir' into lazy attributes
+    - Created buffer attribute
+    - Fixed some tests
+    - Removed dependency on IO::File:;flock
+
+    
