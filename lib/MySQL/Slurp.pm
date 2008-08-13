@@ -1,7 +1,7 @@
 # ---------------------------------------------------------------------
 package MySQL::Slurp;
 
-    our $VERSION = 0.23;
+    our $VERSION = 0.24;
 
     use 5.008 ;
     use Carp;                                         
@@ -14,6 +14,8 @@ package MySQL::Slurp;
 
     use Mknod;  # function mknod creates FIFO / named pipe      
     use MySQL::Slurp::Writer;
+
+    use DBI;
     
 
 # ---------------------------------------------------------------------
@@ -61,8 +63,8 @@ package MySQL::Slurp;
             is            => 'rw' ,
             isa           => 'Str' ,
             required      => 1 ,
-            default       => 'mysqlimport' ,
-            documentation => 'Method to use mysqlimport|LOAD' ,
+            default       => 'dbi' ,
+            documentation => 'Method to use mysqlimport|mysql|dbi|dbi-delayed' ,
     );
    
 # Moved into MySQL::Slurp::Writer roles
@@ -84,6 +86,30 @@ package MySQL::Slurp;
     );
 
 
+
+    has 'dbh' => (
+            is           => 'ro' ,
+            isa          => 'DBI::db' ,
+            required     => 0 ,
+            lazy         => 1 ,
+            default      => sub {
+
+                my $dsn = join( ';', 
+                        "DBI:mysql:database=" . self->database ,
+                        # "host=" . self->host ,
+                        "mysql_read_default_file=~/.my.cnf" ,
+                        "mysql_compression=1" ,
+                        "mysql_use_result=1"
+                      );
+
+                return DBI->connect( $dsn );
+
+            } ,
+            documentation => 'Database handle' ,
+            metaclass     => 'NoGetopt' ,  
+    ); 
+
+
 # ---------------------------------------------------------
 # Internal Attributes
 # ---------------------------------------------------------
@@ -100,7 +126,7 @@ package MySQL::Slurp;
         default       => 
             sub { 
                 if ( 
-                    any { $_ =~ /[^\w] (-v|--verbose)   [ \w$ ]/x } @{ self->args }                  ) {
+                    any { $_ =~ /[^\w] (-v|--verbose) [ \w$ ]/x } @{ self->args }                  ) {
                     return 1 ;
                 } else {
                     return 0 ;
@@ -205,9 +231,13 @@ package MySQL::Slurp;
 
 # -----------------------------------------------------------
 # MySQL Import wrapper
-#   Executes a system command around mysqlimport
+#   Creates the import method
 # -----------------------------------------------------------
     sub _import {                                       
+
+        my $sql = 
+           "LOAD DATA LOCAL INFILE \'" . self->fifo . "\' " . 
+           "INTO TABLE " . self->database . "." . self->table ; 
 
         if ( self->method eq 'mysqlimport' ) {
             
@@ -220,16 +250,29 @@ package MySQL::Slurp;
             print "Executing ... \"$command\" \n" if (self->verbose);
             system( "$command" );
 
-        } elsif ( self->method eq 'LOAD' ) {
+        } elsif ( self->method eq 'mysql' ) {
 
-        
-            my $command = "mysql --local -e\"" .
-                 "LOAD DATA LOCAL INFILE \'" . self->fifo . "\' " . 
-                 "INTO TABLE " . self->database . "." . self->table . "\"";
-            
+            my $command = "mysql --local-infile -e\"$sql\"" ;
+
             print "Executing ... \"$command\" \n" if (self->verbose);
 
             system( "$command &" ); # Command must be placed in background
+
+        } elsif ( self->method eq 'dbi' ) {
+
+            print "Forking $sql \n" if (self->verbose);
+            my $pid = fork;
+            if ( $pid ) {
+              # Parent: Do nothing but continue 
+            } elsif ( defined $pid ) { 
+              # Execute statement in child
+                self->dbh->do( $sql ); 
+                exit 0;
+            } 
+
+        } elsif ( self->method eq 'dbi-delayed' ) {
+
+            croak( "dbi-delayed method not yet available" );
 
         } else {
 
@@ -425,8 +468,8 @@ buffer = 1.
 
 =item method ( default: mysqlimport )
 
-Method to use for importing.  Supports c<mysqlimport> and c<LOAD> for
-mysqlimport and LOAD DATA INFILE, respectively.
+Method to use for importing.  Supports c<mysqlimport>, c<mysql> and 
+c<dbi> for mysqlimport, mysql and dbi loading methods, respectively.
 
 =item args      
 
@@ -467,9 +510,9 @@ Directly accessing the IO::File pipe is not considered Thread safe.
 - remove reliance on installation of mysqlimport, by XS wrapping the C 
 libraries.
 
-- Better error catching than mysqlimport
-
 - create a version to run on windows with named pipes(?)
+
+- create method for INSERT DELAYED 
 
 
 

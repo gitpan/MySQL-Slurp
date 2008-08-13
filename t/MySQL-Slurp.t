@@ -5,7 +5,7 @@
 
 # change 'tests => 1' to 'tests => last_test_to_print';
 
-use Test::More tests => 14;
+use Test::More tests => 13;
 BEGIN { use_ok('MySQL::Slurp') };
 
 #########################
@@ -18,31 +18,27 @@ BEGIN { use_ok('MySQL::Slurp') };
     }
 
 
-  
     my $load = MySQL::Slurp->new( 
         database => 'test', 
         table    => 'mysqlslurp', 
-        args     => ["--force" ] ,
+        args     => ["--force", "--verbose" ] ,
         buffer   => 1000 ,
-        # method   => 'LOAD' ,
+        method   => 'mysqlimport' ,
     );
 
     isa_ok( $load, 'MySQL::Slurp' );
 
   # Attributes 
     diag( "Testing Attributes" );
-    ok( $load->database eq 'test', 'Attribute: database' );
+    ok( $load->database eq 'test'       , 'Attribute: database' );
     ok( $load->table    eq 'mysqlslurp' , 'Attribute: table' );
-    ok( -e $load->tmp            , 'Temporary directory exists' );
-    ok( $load->force    == 1     , 'Hidden attribute recognized' );
+    ok( -e $load->tmp                   , 'Temporary directory exists' );
+    ok( $load->force    == 1            , 'Hidden attribute recognized' );
     ok( $load->dir      
         eq ( $load->tmp . '/mysqlslurp/' . $load->database ) ,
         'FIFO directory' 
     );
 
-    # ok( $load->fifo     eq $load->  
-    # print $load->fifo;
-              
               
   # Methods 
   if  ( ! $ENV{mysqlslurp} ) {
@@ -73,12 +69,13 @@ BEGIN { use_ok('MySQL::Slurp') };
             ( col1 char(25), col2 char(25) ) 
         "`;
 
-        ok( $load->open, 'Method: open' );
-        ok( -p $load->fifo, 'Method: fifo' );
+        ok( $load->open,               'Method: open' );
+        ok( -p $load->fifo,            'Method: fifo' );
                                                        
         ok( $load->print( "d\te\n" ), "Method: write" );
+
         for( 1..10_000 ) {
-            $load->print( "$_\t1\n" );
+            $load->print( "$_\t1\n" );  # printing to table
         }
 
         ok( (print { $load->writer->iofile } "a\tb\n") == 1, 'Direct print to FIFO' );

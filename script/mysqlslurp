@@ -84,7 +84,7 @@ use Pod::Usage;
 
 package main;
 
-use Data::Dumper;
+# use Data::Dumper;
     our $VERSION = '0.84';
     my $slurp = MySQL::Slurp::App->new_with_options;
 

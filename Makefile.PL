@@ -14,7 +14,9 @@ requires 'self'                     => 0.15;
 requires 'Carp'                     => 0;
 requires 'List::MoreUtils'          => 0;
 requires 'Mknod'                    => 0;
-requires 'IO::File::flock'          => 0.31 ; 
+requires 'IO::File'                 => 0.31 ; 
+requires 'DBI'                      => 1.50 ;
+requires 'DBD::mysql'               => 3.0008 ;
 
 requires_external_bin 'mysqlimport';
 requires_external_bin 'mysql';

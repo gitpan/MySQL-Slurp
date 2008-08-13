@@ -28,4 +28,8 @@ Revision history for Perl extension MySQL::Slurp.
     - Fixed some tests
     - Removed dependency on IO::File:;flock
 
+0.24 Tue Aug 12 19:55:00 2008
+    - Changed methods to dbi|mysqlimport|mysql
+    - Fixed problems with prerequisites.
+
     
