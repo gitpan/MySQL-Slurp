@@ -5,7 +5,7 @@
 
 # change 'tests => 1' to 'tests => last_test_to_print';
 
-use Test::More tests => 13;
+use Test::More tests => 14;
 BEGIN { use_ok('MySQL::Slurp') };
 
 #########################
@@ -55,7 +55,7 @@ BEGIN { use_ok('MySQL::Slurp') };
 
     SKIP: {                    
         
-        skip "Skipping live tests", 6 if ! $ENV{mysqlslurp} ;
+        skip "live tests", 7 if ! $ENV{mysqlslurp} ;
         diag( "Testing Methods" );
 
         my $command =  "mysql";

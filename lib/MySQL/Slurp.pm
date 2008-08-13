@@ -1,7 +1,7 @@
 # ---------------------------------------------------------------------
 package MySQL::Slurp;
 
-    our $VERSION = 0.24;
+    our $VERSION = 0.25;
 
     use 5.008 ;
     use Carp;                                         

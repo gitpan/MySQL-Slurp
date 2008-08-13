@@ -1,21 +1,12 @@
 Revision history for Perl extension MySQL::Slurp.
 
-0.01  Mon May 12 00:20:59 2008
-	- original version; created by h2xs 1.23 with options
-		-XAn MySQL::Slurp
+0.25 Wed Aug 13 14:21:00 2008
+    - Fixed mispelling in MANIFEST ( Thanks Matt Boase )
+    - Fixed t/MySQL-Slurp.t to count correct number of tests
 
-0.15 Sun Jul 13 00:00:00 2008
-    - First CPAN Release
-
-0.16 Tue Jul 15 23:18:00 2008
-    - Fix non-required depenencies
-
-0.20 Wed Aug 06 08:00:00 2008
-    - Major revision.  Writing to FIFO using buffering and locking
-    - New dependendy: IO::File::flock
-    
-0.21 Wed Aug 06 12:09:00 2008
-    - Minor changes to tests abd distribution
+0.24 Tue Aug 12 19:55:00 2008
+    - Changed methods to dbi|mysqlimport|mysql
+    - Fixed problems with prerequisites.
 
 0.23 Mon Aug 11 23:18:00 2008
     - Created MySQL::Slurp::Writer class
@@ -28,8 +19,23 @@ Revision history for Perl extension MySQL::Slurp.
     - Fixed some tests
     - Removed dependency on IO::File:;flock
 
-0.24 Tue Aug 12 19:55:00 2008
-    - Changed methods to dbi|mysqlimport|mysql
-    - Fixed problems with prerequisites.
+0.21 Wed Aug 06 12:09:00 2008
+    - Minor changes to tests abd distribution
+
+0.20 Wed Aug 06 08:00:00 2008
+    - Major revision.  Writing to FIFO using buffering and locking
+    - New dependendy: IO::File::flock
+    
+0.16 Tue Jul 15 23:18:00 2008
+    - Fix non-required depenencies
+
+0.15 Sun Jul 13 00:00:00 2008
+    - First CPAN Release
+
+0.01  Mon May 12 00:20:59 2008
+	- original version; created by h2xs 1.23 with options
+		-XAn MySQL::Slurp
+
+
 
     
