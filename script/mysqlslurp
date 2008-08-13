@@ -6,7 +6,7 @@ use self;
 # use Data::Dumper;
 use Pod::Usage;
   extends 'MySQL::Slurp';
-  with 'MooseX::Getopt';
+
 
     # Enable pass_through
     #   This is important since we will pass_through 
@@ -85,7 +85,7 @@ use Pod::Usage;
 package main;
 
 # use Data::Dumper;
-    our $VERSION = '0.84';
+    our $VERSION = '0.85';
     my $slurp = MySQL::Slurp::App->new_with_options;
 
     $slurp->open;
@@ -114,7 +114,7 @@ mysqlslurp - slurp <STDIN> into a MySQL table
 
 
   Example: 
-    cat file | mysqlimport --database=my_db --table=my_table
+    cat file | mysqlslurp --database=my_db --table=my_table
 
 
 =head1 DESCRIPTION

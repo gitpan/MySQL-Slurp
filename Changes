@@ -1,5 +1,9 @@
 Revision history for Perl extension MySQL::Slurp.
 
+0.251 Wed Aug 13 14:44:00 2008
+    - Fixed typo in script/mysqlslurp pod
+    - Bumper version to 0.85
+
 0.25 Wed Aug 13 14:21:00 2008
     - Fixed mispelling in MANIFEST ( Thanks Matt Boase )
     - Fixed t/MySQL-Slurp.t to count correct number of tests
