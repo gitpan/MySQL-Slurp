@@ -1,7 +1,11 @@
 Revision history for Perl extension MySQL::Slurp.
 
+0.26  Thu Aug 14 02:47:00 2008
+    - Made mysqlslurp default method mysqlimport
+    - Fixed MANIFEST to include inc/*
+
 0.251 Wed Aug 13 14:44:00 2008
-    - Fixed typo in script/mysqlslurp pod
+    - Fixed typo in script/mysqlslurp pod ( Thanks Robert Grossman )
     - Bumper version to 0.85
 
 0.25 Wed Aug 13 14:21:00 2008

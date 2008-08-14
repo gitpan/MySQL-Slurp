@@ -32,6 +32,10 @@ use Pod::Usage;
                          ) 
     );
 
+  # ensure that mysqlimport is used as the import method
+    has '+method' => ( default => 'mysqlimport' );
+
+
     has 'database' => (
         is          => 'rw' ,
         isa         => 'Str' ,
@@ -85,7 +89,7 @@ use Pod::Usage;
 package main;
 
 # use Data::Dumper;
-    our $VERSION = '0.85';
+    our $VERSION = '0.86';
     my $slurp = MySQL::Slurp::App->new_with_options;
 
     $slurp->open;
