@@ -23,7 +23,7 @@ BEGIN { use_ok('MySQL::Slurp') };
         table    => 'mysqlslurp', 
         args     => ["--force", "--verbose" ] ,
         buffer   => 1000 ,
-        method   => 'mysqlimport' ,
+        method   => 'dbi' ,
     );
 
     isa_ok( $load, 'MySQL::Slurp' );

@@ -1,5 +1,9 @@
 Revision history for Perl extension MySQL::Slurp.
 
+0.27  Sun Dec 07 
+    - Reworked documentation
+    - Made default method: dbi
+
 0.26  Thu Aug 14 02:47:00 2008
     - Made mysqlslurp default method mysqlimport
     - Fixed MANIFEST to include inc/*

@@ -1,5 +1,5 @@
 ---
-abstract: 'Use PIPEs to import a file into MySQL table.'
+abstract: 'Use PIPEs to write directly to a MySQL table'
 author:
   - 'Christopher Brown, <ctbrown@cpan.org<gt>'
 build_requires:
@@ -27,4 +27,4 @@ requires:
   MooseX::GlobRef::Object: 0.0203
   perl: 5.8.0
   self: 0.15
-version: 0.26
+version: 0.27
