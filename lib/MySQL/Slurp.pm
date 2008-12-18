@@ -13,8 +13,6 @@ MySQL::Slurp - Use PIPEs to write directly to a MySQL table
 
     use 5.008 ;
     use Carp;                                         
-    use self qw(self);  # We do not import args since this is an attribute
-                        # and we get name space clash
     use List::MoreUtils qw(any);
     use File::Path;
     use Moose;
@@ -27,11 +25,11 @@ MySQL::Slurp - Use PIPEs to write directly to a MySQL table
 
 =head1 VERSION
 
-0.27
+0.27_01
 
 =cut
 
-    our $VERSION = 0.27;
+    our $VERSION = 0.27_01;
 
 =head1 SYNOPSIS
 
@@ -164,7 +162,7 @@ The (name of the) temporary directory in which the FIFO/pipe is created.
         isa            => 'Str' ,
         required       => 1 ,
         lazy           => 1 ,
-        default        => sub {  self->tmp . "/mysqlslurp/" . self->database } , 
+        default        => sub {  $_[0]->tmp . "/mysqlslurp/" . $_[0]->database } , 
         documentation  => 'Location of temporary mysqlslurp directory' ,
         metaclass      => 'NoGetopt' ,  
     );
@@ -250,7 +248,7 @@ Whether to display verbose output
         default       => 
             sub { 
                 if ( 
-                    any { $_ =~ /[^\w] (-v|--verbose) [ \w$ ]/x } @{ self->args }                  ) {
+                    any { $_ =~ /[^\w] (-v|--verbose) [ \w$ ]/x } @{ $_[0]->args }                  ) {
                     return 1 ;
                 } else {
                     return 0 ;
@@ -275,7 +273,7 @@ Continue even if errors are encountered
         default       => 
             sub { 
                 if ( 
-                    any { $_ =~ /[^\w] (-f|--force)   [ \w$ ]/x } @{ self->args }                  ) {
+                    any { $_ =~ /[^\w] (-f|--force)   [ \w$ ]/x } @{ $_[0]->args }                  ) {
                     return 1 ;
                 } else {
                     return 0 ;
@@ -302,15 +300,15 @@ C<MySQL::Slurp> object is open, one can print directly to the table.
     sub open {
 
       # mkfifo  
-        self->_mkfifo;  # Create FIFO
+        $_[0]->_mkfifo;  # Create FIFO
 
       # import 
-        self->_import;  # Install reading end of FIFO  
+        $_[0]->_import;  # Install reading end of FIFO  
 
-        # self->_install_globref;
-        self->_install_writer ;
+        # $_[0]->_install_globref;
+        $_[0]->_install_writer ;
 
-        return self;
+        return $_[0];
 
     }
 
@@ -324,7 +322,7 @@ see the L<buffer> attribute.
 
     sub print {
 
-        self->writer->print( @_[1..$#_] );
+        $_[0]->writer->print( @_[1..$#_] );
 
     } 
 
@@ -338,7 +336,7 @@ Read from <STDIN> and write to the database  table.
     sub slurp {
 
         while( <STDIN> ) {
-            self->print( $_ );
+            $_[0]->print( $_ );
         }
         
     } # END METHOD: slurp 
@@ -353,11 +351,11 @@ Calls C<MySQL::Slurp::Writer::close> and L<_rmfifo>.
 
     sub close {
 
-        print "Closing filehandle\n" if ( self->verbose );
+        print "Closing filehandle\n" if ( $_[0]->verbose );
 
-        # self->writer->flush;
-        self->writer->close();
-        self->_rmfifo;
+        # $_[0]->writer->flush;
+        $_[0]->writer->close();
+        $_[0]->_rmfifo;
 
     }
 
@@ -396,8 +394,8 @@ is streamed, C<mysql_use_result=1>.
             default      => sub {
 
                 my $dsn = join( ';', 
-                        "DBI:mysql:database=" . self->database ,
-                        # "host=" . self->host ,
+                        "DBI:mysql:database=" . $_[0]->database ,
+                        # "host=" . $_[0]->host ,
                         "mysql_read_default_file=~/.my.cnf" ,
                         "mysql_compression=1" ,
                         "mysql_use_result=1"
@@ -428,7 +426,7 @@ name of the C<tmp> directory and the name of the C<table>.
         isa           => 'Str' ,
         required      => 1 ,
         lazy          => 1 ,
-        default       => sub { self->dir  . "/" . self->table . ".txt" } ,
+        default       => sub { $_[0]->dir  . "/" . $_[0]->table . ".txt" } ,
         documentation => 'Location of the fifo' ,
         metaclass     => 'NoGetopt' ,  
     );
@@ -451,20 +449,20 @@ a pipe, file, directory exists with the same descriptor.
 
     sub _mkfifo {
 
-        print "Making FIFO ... " . self->fifo . "\n" if ( self->verbose );
+        print "Making FIFO ... " . $_[0]->fifo . "\n" if ( $_[0]->verbose );
 
-        unlink( self->fifo ) if ( -p self->fifo and self->force );
+        unlink( $_[0]->fifo ) if ( -p $_[0]->fifo and $_[0]->force );
 
         croak( "A FIFO already exists for that table.  Delete with 'rm -f "
-            . self->fifo . "' before proceeding\n" ) if ( -e self->fifo );
+            . $_[0]->fifo . "' before proceeding\n" ) if ( -e $_[0]->fifo );
 
        # MAKE FIFO
-         if ( ! -e self->dir ) {
-            mkpath( self->dir, { mode => 0722 } )  
-                or croak( "Cannot make directory ... " . self->dir );
+         if ( ! -e $_[0]->dir ) {
+            mkpath( $_[0]->dir, { mode => 0722 } )  
+                or croak( "Cannot make directory ... " . $_[0]->dir );
          } 
 
-         mknod( self->fifo , S_IFIFO|0644 ) 
+         mknod( $_[0]->fifo , S_IFIFO|0644 ) 
             or croak( "Cannot make FIFO" );
 
     } 
@@ -478,14 +476,14 @@ Removes the FIFO.  Used in cleaning up after the upload.
 
     sub _rmfifo {
         
-        print  "Removing FIFO ... " . self->fifo . "\n" if ( self->verbose ); 
+        print  "Removing FIFO ... " . $_[0]->fifo . "\n" if ( $_[0]->verbose ); 
 
-        if ( -p self->fifo ) {
-            unlink self->fifo or warn( "Cannot remove fifo " . self->fifo );
+        if ( -p $_[0]->fifo ) {
+            unlink $_[0]->fifo or warn( "Cannot remove fifo " . $_[0]->fifo );
         } 
 
-        if ( -d self->dir ) {   # and  ! self->dir_exists ) {
-            rmtree( self->dir );
+        if ( -d $_[0]->dir ) {   # and  ! $_[0]->dir_exists ) {
+            rmtree( $_[0]->dir );
         }
 
     }
@@ -501,50 +499,50 @@ from the table.
     sub _import {                                       
 
         my $sql = 
-           "LOAD DATA LOCAL INFILE \'" . self->fifo . "\' " . 
-           "INTO TABLE " . self->database . "." . self->table ; 
+           "LOAD DATA LOCAL INFILE \'" . $_[0]->fifo . "\' " . 
+           "INTO TABLE " . $_[0]->database . "." . $_[0]->table ; 
 
       # METHOD: MYSQLIMPORT 
-        if ( self->method eq 'mysqlimport' ) {
+        if ( $_[0]->method eq 'mysqlimport' ) {
             
             my $command = 'mysqlimport --local ' 
                 . join( 
                     " ", 
-                    @{ self->args }, self->database, self->fifo, "&" 
+                    @{ $_[0]->args }, $_[0]->database, $_[0]->fifo, "&" 
                 );
 
-            print "Executing ... \"$command\" \n" if (self->verbose);
+            print "Executing ... \"$command\" \n" if ($_[0]->verbose);
             system( "$command" );
 
       # METHOD: MYSQL
-        } elsif ( self->method eq 'mysql' ) {
+        } elsif ( $_[0]->method eq 'mysql' ) {
 
             my $command = "mysql --local-infile -e\"$sql\"" ;
 
-            print "Executing ... \"$command\" \n" if (self->verbose);
+            print "Executing ... \"$command\" \n" if ($_[0]->verbose);
 
             system( "$command &" ); # Command must be placed in background
 
       # METHOD: dbi 
-        } elsif ( self->method eq 'dbi' ) {
+        } elsif ( $_[0]->method eq 'dbi' ) {
 
-            print "Forking $sql \n" if (self->verbose);
+            print "Forking $sql \n" if ($_[0]->verbose);
             my $pid = fork;
             if ( $pid ) {
               # Parent: Do nothing but continue 
             } elsif ( defined $pid ) { 
               # Execute statement in child
-                self->dbh->do( $sql ); 
+                $_[0]->dbh->do( $sql ); 
                 exit 0;
             } 
 
-        } elsif ( self->method eq 'dbi-delayed' ) {
+        } elsif ( $_[0]->method eq 'dbi-delayed' ) {
 
             croak( "dbi-delayed method not yet available" );
 
         } else {
 
-            croak( self->method . " method not supported " );
+            croak( $_[0]->method . " method not supported " );
 
         }
 
@@ -557,15 +555,15 @@ from the table.
 
     sub _install_writer {
 
-       # self->writer( IO::File->new( self->fifo, ">" ) );
-        self->writer( 
+       # $_[0]->writer( IO::File->new( $_[0]->fifo, ">" ) );
+        $_[0]->writer( 
           MySQL::Slurp::Writer->new( 
-            filename => self->fifo ,
-            buffer   => self->buffer ,
+            filename => $_[0]->fifo ,
+            buffer   => $_[0]->buffer ,
           )
         );
 
-       return self->writer; # important for some reason.
+       return $_[0]->writer; # important for some reason.
 
     }
        
@@ -573,14 +571,14 @@ from the table.
 
 =head2 _write 
 
-Print to L<MySQL::Slurp::Writer> object located in C<self->writer>.
+Print to L<MySQL::Slurp::Writer> object located in C<$_[0]->writer>.
 
 =cut
 
 
     sub _write {
     
-        print { self->writer } @_[1..$#_] ;
+        print { $_[0]->writer } @_[1..$#_] ;
     
     }
 

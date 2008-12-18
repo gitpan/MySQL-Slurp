@@ -1,7 +1,6 @@
 package MySQL::Slurp::Writer;
 
-# MySQL::Slurp::Writer -  provide a buffer writing file handle
-#   Contains everything for the writing
+# MySQL::Slurp::Writer -  provide a buffer writing file handle for MySQL::Slurp
 #
 # Attributes:
 #   buffer      Int
@@ -18,42 +17,14 @@ package MySQL::Slurp::Writer;
 #   lock_ex
 #   lock_un
 #  
-# Or in MySQL::Slurp
-# READER ...
-#  my $slurper1 = MySQL::Slurp->new( );
-#       $slurper->_mkfifo;
-#       $slurper->_import;
-#       
-# READER ...
-#   MySQL::Slurp->reader();  # Class based method
-#   
-# There is no reader method.  There is only a FIFO created on the 
-# filesystem
-#
-# WRITER
-#  my $slurper2 = MySQL::Slurp->new( );
-#       $slurper2->_install_writer;
-#       $slurper2->print( @values );
-#
-# WRITER
-#  my $slurper3 = MySQL::Slurp::Writer->new( filename => .. , buffer => .. );
-#     $slurper3->print( @values );
-#
-# WRITER
-# my $writer = $slurper->writer;
-#   
-#
-#   should write test for existence of writer
 
-our $VERSION = 0.04;
+our $VERSION = 0.27_01;
 
-use self;
 use Fcntl ':flock';
+use IO::File;
 use Moose;
-    extends 'IO::File';
     
 
-  # remains in the superclass. 
     has 'filename' => ( 
         is            => 'rw' ,
         isa           => 'Str' ,
@@ -71,13 +42,11 @@ use Moose;
     );
 
 
-  # Actual buffer object
     has '_buffer' => (
             is            => 'rw' ,
             isa           => 'ArrayRef' ,
             required      => 1 ,
             default       => sub { [ ] } ,
-#           metaclass     => 'NoGetopt' ,
             documentation => 'Write record buffer' ,
     );
 
@@ -86,8 +55,8 @@ use Moose;
             is            => 'ro' ,
             isa           => 'IO::File' ,
             required      => 0 ,
-#           metaclass     => 'NoGetopt' ,
             documentation => 'IO::File object' ,
+            handles       => [ qw(open) ] ,
     );
     
 
@@ -99,7 +68,7 @@ use Moose;
     sub BUILD { 
 
       # Create a iofile handle
-        self->{iofile} = IO::File->new( self->filename, ">" ) ;
+        $_[0]->{iofile} = IO::File->new( $_[0]->filename, ">" ) ;
 
     }
         
@@ -114,11 +83,11 @@ use Moose;
         
         my $n_records = $#_;
 
-        push( @{ self->_buffer }, @_[1..$#_]); 
+        push( @{ $_[0]->_buffer }, @_[1..$#_]); 
 
       # Flush buffer if it exceeds capacity
-        self->flush
-          if ( scalar @{ self->_buffer } > self->buffer );
+        $_[0]->flush
+          if ( scalar @{ $_[0]->_buffer } > $_[0]->buffer );
 
         $n_records;  # return the number of records committed 
 
@@ -128,13 +97,13 @@ use Moose;
   # Flush buffer to FIFO
     sub flush {
 
-            my $records = scalar @{ self->_buffer };
+            my $records = scalar @{ $_[0]->_buffer };
             
-            self->lock_ex;
-            print { self->iofile } @{ self->_buffer }; 
-            self->lock_un; 
+            $_[0]->lock_ex;
+            print { $_[0]->iofile } @{ $_[0]->_buffer }; 
+            $_[0]->lock_un; 
 
-            self->_buffer( [] );
+            $_[0]->_buffer( [] );
 
             return $records;
 
@@ -143,28 +112,27 @@ use Moose;
 
     sub lock_ex {
 
-        flock( self->iofile, LOCK_EX );
+        flock( $_[0]->iofile, LOCK_EX );
 
     }
 
     sub lock_un {
 
-        flock( self->iofile, LOCK_UN );
+        flock( $_[0]->iofile, LOCK_UN );
 
     }
 
     sub close { 
 
-        self->flush;
-        self->iofile->close;
+        $_[0]->flush;
+        $_[0]->iofile->close;
 
     }
+
 
 # ---------------------------------------------------------------------
 # EVENTS
 # ---------------------------------------------------------------------
-
-
 
     __PACKAGE__->meta->make_immutable;
 

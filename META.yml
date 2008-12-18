@@ -26,5 +26,4 @@ requires:
   Moose: 0.51
   MooseX::GlobRef::Object: 0.0203
   perl: 5.8.0
-  self: 0.15
-version: 0.27
+version: 0.2701

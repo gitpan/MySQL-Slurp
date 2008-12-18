@@ -1,5 +1,12 @@
 Revision history for Perl extension MySQL::Slurp.
 
+0.27_01 Thu Dec 18
+    - Eliminated dependency on self  module which was failing unreliably
+      on Solaris 2.10
+    - Modified MySQL::Slurp::Writer to not extend IO::File and have the 
+      functionality in attribute iofile
+    - Minor documentaion tweaks.
+
 0.27  Sun Dec 07 
     - Reworked documentation
     - Made default method: dbi
