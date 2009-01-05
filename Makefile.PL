@@ -9,7 +9,8 @@ all_from     'lib/MySQL/Slurp.pm';
 # Specific dependencies
 requires 'Moose'                    => 0.51; 
 requires 'MooseX::GlobRef::Object'  => 0.0203;
-requires 'File::Path'               => 2.04;
+# requires 'File::Path'               => 2.07;
+requires 'File::Temp'               => 0.21;
 requires 'Carp'                     => 0;
 requires 'List::MoreUtils'          => 0;
 requires 'Mknod'                    => 0;

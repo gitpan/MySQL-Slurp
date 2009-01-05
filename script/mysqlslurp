@@ -15,22 +15,22 @@ use Pod::Usage;
       # print Dumper &Getopt::Long::Configure;
       &Getopt::Long::Configure( qw( pass_through auto_version ) );
       
-
-    has 'tmp' => (
-        is           => 'rw' ,
-        isa          => 'Str' ,
-        required     => 1 ,
-        default      => $ENV{ TMPDIR } || $ENV{ TMP } || '/tmp' || '.' ,
-        metaclass    => 'MooseX::Getopt::Meta::Attribute' ,
-        cmd_aliases  => [ 'tmpdir', 'temp' ] ,
-        documentation => 'Directory to hold the pipe.  Default: ' . 
-                         ( 
-                           $ENV{TMPDIR} || 
-                           $ENV{TMP}    || 
-                           ( (-d '/tmp' && -w '/tmp' ) ? '/tmp' : 0 ) ||
-                           '.'
-                         ) 
-    );
+# Removed in MySQL::Slurp 0.2702, mysqlslurp 0.86
+#    has '+tmp' => (
+#        is           => 'rw' ,
+#        isa          => 'Str' ,
+#        required     => 1 ,
+#        default      => $ENV{ TMPDIR } || $ENV{ TMP } || '/tmp' || '.' ,
+#        metaclass    => 'MooseX::Getopt::Meta::Attribute' ,
+#        cmd_aliases  => [ 'tmpdir', 'temp' ] ,
+#        documentation => 'Directory to hold the pipe.  Default: ' . 
+#                         ( 
+#                           $ENV{TMPDIR} || 
+#                           $ENV{TMP}    || 
+#                           ( (-d '/tmp' && -w '/tmp' ) ? '/tmp' : 0 ) ||
+#                           '.'
+#                         ) 
+#    );
 
   # ensure that mysqlimport is used as the import method
     has '+method' => ( default => 'mysqlimport' );
@@ -89,7 +89,7 @@ use Pod::Usage;
 package main;
 
 # use Data::Dumper;
-    our $VERSION = '0.86';
+    our $VERSION = '0.87';
     my $slurp = MySQL::Slurp::App->new_with_options;
 
     $slurp->open;

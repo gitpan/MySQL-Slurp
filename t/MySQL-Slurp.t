@@ -5,7 +5,7 @@
 
 # change 'tests => 1' to 'tests => last_test_to_print';
 
-use Test::More tests => 14;
+use Test::More tests => 12;
 BEGIN { use_ok('MySQL::Slurp') };
 
 #########################
@@ -29,15 +29,15 @@ BEGIN { use_ok('MySQL::Slurp') };
     isa_ok( $load, 'MySQL::Slurp' );
 
   # Attributes 
-    diag( "Testing Attributes" );
+    diag( "\nTesting Attributes" );
     ok( $load->database eq 'test'       , 'Attribute: database' );
     ok( $load->table    eq 'mysqlslurp' , 'Attribute: table' );
     ok( -e $load->tmp                   , 'Temporary directory exists' );
     ok( $load->force    == 1            , 'Hidden attribute recognized' );
-    ok( $load->dir      
-        eq ( $load->tmp . '/mysqlslurp/' . $load->database ) ,
-        'FIFO directory' 
-    );
+    isa_ok( $load->tmp, "File::Temp::Dir" );      
+    #     eq ( $load->tmp . '/mysqlslurp/' . $load->database ) ,
+    #    'FIFO directory' 
+    # );
 
               
   # Methods 
@@ -81,8 +81,6 @@ BEGIN { use_ok('MySQL::Slurp') };
         ok( (print { $load->writer->iofile } "a\tb\n") == 1, 'Direct print to FIFO' );
 
         ok( $load->close, 'Method: close' );
-        ok( ! -p $load->fifo , 'FIFO successfully removed' );
-        ok( ! -d $load->dir, 'Temporary directory successfully removed' );
 
         `$command -e"drop table if exists test.mysqlslurp"`;
 

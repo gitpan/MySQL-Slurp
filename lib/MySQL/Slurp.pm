@@ -11,10 +11,10 @@ MySQL::Slurp - Use PIPEs to write directly to a MySQL table
 
 =cut
 
-    use 5.008 ;
+    use 5.008;
     use Carp;                                         
     use List::MoreUtils qw(any);
-    use File::Path;
+    use File::Temp;
     use Moose;
         with 'MooseX::Getopt';          # For NoGetopt tags
 
@@ -25,11 +25,11 @@ MySQL::Slurp - Use PIPEs to write directly to a MySQL table
 
 =head1 VERSION
 
-0.27_01
+0.27_02
 
 =cut
 
-    our $VERSION = 0.27_01;
+    our $VERSION = 0.27_02;
 
 =head1 SYNOPSIS
 
@@ -142,18 +142,22 @@ Name of MySQL table to write to.
 
 =item tmp  
 
-default: $ENV{TMPDIR} || $ENV{TMP} || /tmp || . ( present directory )
-
-The (name of the) temporary directory in which the FIFO/pipe is created.
+The (name of the) temporary directory in which the FIFO/pipe is created.  This is created by L<File::Temp>
 
 =cut 
 
+  # Replace with File::Temp::newdir as of Version 0.27_02
+  # tmp no longer is a command-line option. This is handled automatically.
     has 'tmp'  => ( 
             is            => 'rw' , 
-            isa           => 'Str' , 
+            isa           => 'File::Temp::Dir' , 
             required      => 1 , 
-            default       => $ENV{ TMPDIR } || $ENV{ TMP } || '/tmp' || '.' , 
+            default       => 
+                sub { 
+                    File::Temp->newdir( 'mysqlslurp.XXXXXX', TMPDIR => 1 ); 
+                    } ,
             documentation => "Temporary directory for " . __PACKAGE__  ,
+            metaclass      => 'NoGetopt' , 
     );                                                                 
 
 
@@ -162,10 +166,11 @@ The (name of the) temporary directory in which the FIFO/pipe is created.
         isa            => 'Str' ,
         required       => 1 ,
         lazy           => 1 ,
-        default        => sub {  $_[0]->tmp . "/mysqlslurp/" . $_[0]->database } , 
+        default        => sub { $_[0]->tmp->dirname } ,
         documentation  => 'Location of temporary mysqlslurp directory' ,
         metaclass      => 'NoGetopt' ,  
     );
+
 
 
 =item buffer  
@@ -202,8 +207,9 @@ most portable.
 
 C<mysql> uses the C<mysql> command line application.
 
-C<mysqlimport> uses the mysqlimport appication.  This is faster than the 
-DBI method.  It reads settings from C<~/.my.cnf>.  
+C<mysqlimport> uses the mysqlimport appication.  Since the mysqlimport 
+uses multiple threads.  This is faster than the DBI method.  It reads 
+settings from C<~/.my.cnf>.    
 
 =cut 
 
@@ -355,7 +361,7 @@ Calls C<MySQL::Slurp::Writer::close> and L<_rmfifo>.
 
         # $_[0]->writer->flush;
         $_[0]->writer->close();
-        $_[0]->_rmfifo;
+        # $_[0]->_rmfifo;
 
     }
 
@@ -445,6 +451,8 @@ Do not use these methods directly.
 Creates the FIFO at C<[tmp]/mysqlslurp/[table].txt>.  This will die if 
 a pipe, file, directory exists with the same descriptor.
 
+The fifo is created as with default mode 0777. 
+
 =cut 
 
     sub _mkfifo {
@@ -457,10 +465,8 @@ a pipe, file, directory exists with the same descriptor.
             . $_[0]->fifo . "' before proceeding\n" ) if ( -e $_[0]->fifo );
 
        # MAKE FIFO
-         if ( ! -e $_[0]->dir ) {
-            mkpath( $_[0]->dir, { mode => 0722 } )  
-                or croak( "Cannot make directory ... " . $_[0]->dir );
-         } 
+        croak( "Cannot cannot directory ... " . $_[0]->dir )
+         if ( ! -e $_[0]->dir ); 
 
          mknod( $_[0]->fifo , S_IFIFO|0644 ) 
             or croak( "Cannot make FIFO" );
@@ -474,7 +480,7 @@ Removes the FIFO.  Used in cleaning up after the upload.
 
 =cut
 
-    sub _rmfifo {
+    sub _rmfifoX {
         
         print  "Removing FIFO ... " . $_[0]->fifo . "\n" if ( $_[0]->verbose ); 
 
@@ -482,9 +488,9 @@ Removes the FIFO.  Used in cleaning up after the upload.
             unlink $_[0]->fifo or warn( "Cannot remove fifo " . $_[0]->fifo );
         } 
 
-        if ( -d $_[0]->dir ) {   # and  ! $_[0]->dir_exists ) {
-            rmtree( $_[0]->dir );
-        }
+        # if ( -d $_[0]->dir ) {   # and  ! $_[0]->dir_exists ) {
+        #    rmtree( $_[0]->dir );
+        # }
 
     }
         

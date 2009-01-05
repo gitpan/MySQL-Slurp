@@ -19,11 +19,11 @@ requires:
   Carp: 0
   DBD::mysql: 3.0008
   DBI: 1.5
-  File::Path: 2.04
+  File::Temp: 0.21
   IO::File: 0.31
   List::MoreUtils: 0
   Mknod: 0
   Moose: 0.51
   MooseX::GlobRef::Object: 0.0203
   perl: 5.8.0
-version: 0.2701
+version: 0.2702

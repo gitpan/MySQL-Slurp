@@ -25,7 +25,7 @@ BEGIN { use_ok('MySQL::Slurp::Writer') };
 
 
     use Data::Dumper;                        
-    print  Dumper $writer;
+    # print  Dumper $writer;
     flock( $writer->iofile, LOCK_EX );
 
   # Use method of the subclass                                  
