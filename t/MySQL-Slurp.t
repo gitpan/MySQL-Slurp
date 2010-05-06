@@ -5,7 +5,7 @@
 
 # change 'tests => 1' to 'tests => last_test_to_print';
 
-use Test::More tests => 12;
+use Test::More tests => 14;
 BEGIN { use_ok('MySQL::Slurp') };
 
 #########################

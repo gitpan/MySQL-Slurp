@@ -25,11 +25,11 @@ MySQL::Slurp - Use PIPEs to write directly to a MySQL table
 
 =head1 VERSION
 
-0.27_02
+0.28
 
 =cut
 
-    our $VERSION = 0.27_02;
+    our $VERSION = 0.28;
 
 =head1 SYNOPSIS
 

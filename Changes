@@ -1,4 +1,8 @@
 Revision history for Perl extension MySQL::Slurp.
+0.28 Thur May 06 2010
+    - Syncronized version numbers
+    - fixed install problems
+    
 
 0.27_02 Sat Jan 03 2009
     - Changed default permissions on the fifo directory to world all.   

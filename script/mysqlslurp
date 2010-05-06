@@ -1,40 +1,22 @@
 #!/bin/env perl
 
 package MySQL::Slurp::App;
-use Moose;
-use self;
-# use Data::Dumper;
-use Pod::Usage;
-  extends 'MySQL::Slurp';
+
+  use Moose;
+  use self;
+  use Pod::Usage;
+    extends 'MySQL::Slurp';
 
 
-    # Enable pass_through
-    #   This is important since we will pass_through 
-    #   remaining options to mysqlimport.
-    #
-      # print Dumper &Getopt::Long::Configure;
-      &Getopt::Long::Configure( qw( pass_through auto_version ) );
-      
-# Removed in MySQL::Slurp 0.2702, mysqlslurp 0.86
-#    has '+tmp' => (
-#        is           => 'rw' ,
-#        isa          => 'Str' ,
-#        required     => 1 ,
-#        default      => $ENV{ TMPDIR } || $ENV{ TMP } || '/tmp' || '.' ,
-#        metaclass    => 'MooseX::Getopt::Meta::Attribute' ,
-#        cmd_aliases  => [ 'tmpdir', 'temp' ] ,
-#        documentation => 'Directory to hold the pipe.  Default: ' . 
-#                         ( 
-#                           $ENV{TMPDIR} || 
-#                           $ENV{TMP}    || 
-#                           ( (-d '/tmp' && -w '/tmp' ) ? '/tmp' : 0 ) ||
-#                           '.'
-#                         ) 
-#    );
+  # Enable pass_through
+  #   This is important since we will pass_through 
+  #   remaining options to mysqlimport.
+  #
+  # print Dumper &Getopt::Long::Configure;
+    &Getopt::Long::Configure( qw( pass_through auto_version ) );
 
   # ensure that mysqlimport is used as the import method
     has '+method' => ( default => 'mysqlimport' );
-
 
     has 'database' => (
         is          => 'rw' ,
@@ -76,7 +58,6 @@ use Pod::Usage;
     );
 
 
-
     has 'man' => ( 
         is          => 'rw' ,
         isa         => 'Bool' ,
@@ -86,10 +67,10 @@ use Pod::Usage;
     );
 
 
+
 package main;
 
-# use Data::Dumper;
-    our $VERSION = '0.87';
+    our $VERSION = '0.90';
     my $slurp = MySQL::Slurp::App->new_with_options;
 
     $slurp->open;
@@ -172,5 +153,3 @@ at your option, any later version of Perl 5 you may have available.
 
 
 =cut        
-
-

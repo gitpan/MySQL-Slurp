@@ -18,7 +18,7 @@ package MySQL::Slurp::Writer;
 #   lock_un
 #  
 
-our $VERSION = 0.27_01;
+our $VERSION = 0.28;
 
 use Fcntl ':flock';
 use IO::File;
